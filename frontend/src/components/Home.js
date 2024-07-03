@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 
+import { Link } from 'react-router-dom';
+
 const Home = () => {
   const username = sessionStorage.getItem('username')
   const apiToken = sessionStorage.getItem('apiToken');
@@ -83,6 +85,17 @@ let job_list = () => {
         </label>
       </div>
       <button onClick={create_job}>Click me!</button>
+
+
+
+      <div style={{ marginTop: '20px' }}>
+        <Link to="/build">
+          <button style={{ marginRight: '10px' }}>Build Job</button>
+        </Link>
+        <Link to="/list">
+          <button>Fetch list</button>
+        </Link>
+      </div>
     </div>
   );
 };
