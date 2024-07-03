@@ -10,10 +10,10 @@ import (
 	"github.com/rs/cors"
 )
 
-const (
+var (
 	JenkinsURL   = "http://localhost:8080/api/json?tree=jobs[name,color]" // jenkins_url + /api/json?tree=jobs[name,color]
-	JenkinsUser  = "varshit"                                              // Your username
-	JenkinsToken = "11ee668bba64573ccdba0d25f3c42b1607"                   // Your API key
+	JenkinsUser  = ""                                             // Your username
+	JenkinsToken = ""                   // Your API key
 )
 
 type Job struct {
@@ -70,7 +70,38 @@ func main() {
 		fmt.Println("GET Request perfect")
 	})
 
+	mux.HandleFunc("/auth", func(w http.ResponseWriter, r *http.Request) {
+		// Extract query parameters from the incoming request
+		username := r.URL.Query().Get("username")
+		apiToken := r.URL.Query().Get("apiToken")
+
+		// fmt.Println(JenkinsUser, JenkinsToken)
+
+		// fmt.Println(username , apiToken);
+		// Check if the required parameters are present
+		if username == "" || apiToken == "" {
+			http.Error(w, "Missing username or apiToken parameter", http.StatusBadRequest)
+			return
+		}
+		JenkinsUser = username
+		JenkinsToken = apiToken
+	})
+
 	mux.HandleFunc("/get-jobs", func(w http.ResponseWriter, r *http.Request) {
+		username := r.URL.Query().Get("username")
+		apiToken := r.URL.Query().Get("apiToken")
+
+		// fmt.Println(JenkinsUser, JenkinsToken)
+
+		// fmt.Println(username , apiToken);
+		// Check if the required parameters are present
+		if username == "" || apiToken == "" {
+			http.Error(w, "Missing username or apiToken parameter", http.StatusBadRequest)
+			return
+		}
+		JenkinsUser = username
+		JenkinsToken = apiToken
+		
 		jobs, err := getJenkinsJobs()
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
