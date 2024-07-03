@@ -62,12 +62,66 @@ func getJenkinsJobs() ([]Job, error) {
 	return jenkinsResp.Jobs, nil
 }
 
+type JobInfo struct {
+	Name  string `json:"name"`
+	URL   string `json:"url"`
+	Color string `json:"color"`
+	// Add more fields as needed
+}
+
+func getJobInfo(jobName string) (*JobInfo, error) {
+	url := fmt.Sprintf("http://localhost:8080//job/%s/api/json?tree=builds[number,status,timestamp,id,result]", jobName) // /job/${job_name}/lastBuild/api/json?tree=result,timestamp,estimatedDuration
+	client := &http.Client{}
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		log.Fatalf("Failed to create request: %v", err)
+	}
+
+	req.SetBasicAuth(JenkinsUser, JenkinsToken)
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Fatalf("Failed to send request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		log.Fatalf("Unexpected response status: %s", resp.Status)
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Fatalf("Failed to read response body: %v", err)
+	}
+
+	fmt.Println(string(body))
+
+	var jobInfo JobInfo
+	err = json.Unmarshal(body, &jobInfo)
+	if err != nil {
+		log.Fatalf("Failed to unmarshal JSON: %v", err)
+	}
+
+	return &jobInfo, nil
+}
+
 func main() {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/thar", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintln(w, "GET REQUEST PERFECT")
 		fmt.Println("GET Request perfect")
+	})
+
+	mux.HandleFunc("/job-info", func(w http.ResponseWriter, r *http.Request) {
+		params := r.URL.Query()
+		jobName := params.Get("job")
+		jobInfo, err := getJobInfo(jobName)
+		if err != nil {
+			panic(err)
+		}
+		fmt.Printf("Job Name: %s\n", jobInfo.Name)
+		fmt.Printf("Job URL: %s\n", jobInfo.URL)
+		fmt.Printf("Job Color: %s\n", jobInfo.Color)
 	})
 
 	mux.HandleFunc("/get-jobs", func(w http.ResponseWriter, r *http.Request) {
