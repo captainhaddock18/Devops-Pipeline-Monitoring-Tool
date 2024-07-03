@@ -4,16 +4,17 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"encoding/base64"
 	"log"
 	"net/http"
 
 	"github.com/rs/cors"
 )
 
-const (
+var (
 	JenkinsURL   = "http://localhost:8080/api/json?tree=jobs[name,color]" // jenkins_url + /api/json?tree=jobs[name,color]
-	JenkinsUser  = "varshit"                                              // Your username
-	JenkinsToken = "11ee668bba64573ccdba0d25f3c42b1607"                   // Your API key
+	JenkinsUser  = ""                                             // Your username
+	JenkinsToken = ""                   // Your API key
 )
 
 type Job struct {
@@ -105,6 +106,7 @@ func getJobInfo(jobName string) (*JobInfo, error) {
 }
 
 func main() {
+
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/thar", func(w http.ResponseWriter, r *http.Request) {
@@ -124,7 +126,85 @@ func main() {
 		fmt.Printf("Job Color: %s\n", jobInfo.Color)
 	})
 
+	mux.HandleFunc("/auth", func(w http.ResponseWriter, r *http.Request) {
+		// Extract query parameters from the incoming request
+		username := r.URL.Query().Get("username")
+		apiToken := r.URL.Query().Get("apiToken")
+
+		// fmt.Println(JenkinsUser, JenkinsToken)
+
+		// fmt.Println(username , apiToken);
+		// Check if the required parameters are present
+		if username == "" || apiToken == "" {
+			http.Error(w, "Missing username or apiToken parameter", http.StatusBadRequest)
+			return
+		}
+		JenkinsUser = username
+		JenkinsToken = apiToken
+	})
+	mux.HandleFunc("/create-job", func(w http.ResponseWriter, r *http.Request) {
+		// Extract query parameters from the incoming request
+		username := r.URL.Query().Get("username")
+		apiToken := r.URL.Query().Get("apiToken")
+		jobName := r.URL.Query().Get("jobName")
+		preJob := r.URL.Query().Get("preJob")
+
+		// Check if the required parameters are present
+		if username == "" || apiToken == "" {
+			http.Error(w, "Missing username or apiToken parameter", http.StatusBadRequest)
+			return
+		}
+
+		// Prepare the Jenkins API request
+		url := "http://localhost:8080/createItem?name=" + jobName + "&mode=copy&from=" + preJob
+		client := &http.Client{}
+		req, err := http.NewRequest("POST", url, nil)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Failed to create request: %v", err), http.StatusInternalServerError)
+			return
+		}
+
+		// Set Basic Auth header
+		auth := username + ":" + apiToken
+		encodedAuth := base64.StdEncoding.EncodeToString([]byte(auth))
+		req.Header.Add("Authorization", "Basic "+encodedAuth)
+
+		// Make the request to Jenkins
+		resp, err := client.Do(req)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Failed to make request to Jenkins: %v", err), http.StatusInternalServerError)
+			return
+		}
+		defer resp.Body.Close()
+
+		// Check if the response is successful
+		if resp.StatusCode != http.StatusOK {
+			http.Error(w, fmt.Sprintf("Failed to create job: received status code %d", resp.StatusCode), resp.StatusCode)
+			return
+		}
+
+		// Redirect to the Jenkins URL
+		redirectURL := "http://localhost:8080/job/" + jobName
+		http.Redirect(w, r, redirectURL, http.StatusSeeOther)
+	})
+	
+
+
 	mux.HandleFunc("/get-jobs", func(w http.ResponseWriter, r *http.Request) {
+		username := r.URL.Query().Get("username")
+		apiToken := r.URL.Query().Get("apiToken")
+
+		// fmt.Println(JenkinsUser, JenkinsToken)
+
+		// fmt.Println(username , apiToken);
+		// Check if the required parameters are present
+		if username == "" || apiToken == "" {
+			http.Error(w, "Missing username or apiToken parameter", http.StatusBadRequest)
+			return
+		}
+		JenkinsUser = username
+		JenkinsToken = apiToken
+		
 		jobs, err := getJenkinsJobs()
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -136,7 +216,7 @@ func main() {
 
 	// Create the CORS middleware
 	c := cors.New(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:3000"}, // Change this to the origin you want to allow
+		AllowedOrigins:   []string{"http://localhost:3000", "http://localhost:8080"}, // Change this to the origin you want to allow
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Content-Type", "Authorization"},
 		AllowCredentials: true,
