@@ -6,7 +6,8 @@ import axios
 const Home = () => {
   const username = sessionStorage.getItem('username');
   const apiToken = sessionStorage.getItem('apiToken');
-
+  const [jobName, setJobName] = useState('');
+  const [preJob, setPreJob] = useState('');
   const [jobs, setJobs] = useState([]);
   let but = () => {
     axios.get('http://localhost:3010/thar')
@@ -30,13 +31,39 @@ const Home = () => {
       });
       
   };
+  const create_job = () => {
+    
+    axios.post(`http://localhost:3010/create-job?username=${username}&apiToken=${apiToken}&jobName=${jobName}&preJob=${preJob}`, {}, {
+    })
+    .then((response) => {
+      console.log(response);
+    })
+    .catch((err) => {
+      console.log(err);
+    });
+  };
+  
 
   return (
     <div>
       <h2>Home</h2>
       <p>Welcome, {username}!</p>
       <p>Your API Token is: {apiToken}</p>
-      <button onClick={job_list}>Click me!</button>
+      <div>
+        <label>
+          Job Name:
+          <input type="text" value={jobName} onChange={(e) => setJobName(e.target.value)} />
+        </label>
+      </div>
+
+      <div>
+        <label>
+          Pre Job:
+          <input type="text" value={preJob} onChange={(e) => setPreJob(e.target.value)} />
+        </label>
+      </div>
+
+      <button onClick={create_job}>Click me!</button>
     </div>
   );
 };

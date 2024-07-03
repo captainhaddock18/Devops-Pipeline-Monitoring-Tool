@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"encoding/base64"
 	"log"
 	"net/http"
 
@@ -63,6 +64,7 @@ func getJenkinsJobs() ([]Job, error) {
 }
 
 func main() {
+
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/thar", func(w http.ResponseWriter, r *http.Request) {
@@ -86,6 +88,53 @@ func main() {
 		JenkinsUser = username
 		JenkinsToken = apiToken
 	})
+	mux.HandleFunc("/create-job", func(w http.ResponseWriter, r *http.Request) {
+		// Extract query parameters from the incoming request
+		username := r.URL.Query().Get("username")
+		apiToken := r.URL.Query().Get("apiToken")
+		jobName := r.URL.Query().Get("jobName")
+		preJob := r.URL.Query().Get("preJob")
+
+		// Check if the required parameters are present
+		if username == "" || apiToken == "" {
+			http.Error(w, "Missing username or apiToken parameter", http.StatusBadRequest)
+			return
+		}
+
+		// Prepare the Jenkins API request
+		url := "http://localhost:8080/createItem?name=" + jobName + "&mode=copy&from=" + preJob
+		client := &http.Client{}
+		req, err := http.NewRequest("POST", url, nil)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Failed to create request: %v", err), http.StatusInternalServerError)
+			return
+		}
+
+		// Set Basic Auth header
+		auth := username + ":" + apiToken
+		encodedAuth := base64.StdEncoding.EncodeToString([]byte(auth))
+		req.Header.Add("Authorization", "Basic "+encodedAuth)
+
+		// Make the request to Jenkins
+		resp, err := client.Do(req)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Failed to make request to Jenkins: %v", err), http.StatusInternalServerError)
+			return
+		}
+		defer resp.Body.Close()
+
+		// Check if the response is successful
+		if resp.StatusCode != http.StatusOK {
+			http.Error(w, fmt.Sprintf("Failed to create job: received status code %d", resp.StatusCode), resp.StatusCode)
+			return
+		}
+
+		// Redirect to the Jenkins URL
+		redirectURL := "http://localhost:8080/job/" + jobName
+		http.Redirect(w, r, redirectURL, http.StatusSeeOther)
+	})
+	
+
 
 	mux.HandleFunc("/get-jobs", func(w http.ResponseWriter, r *http.Request) {
 		username := r.URL.Query().Get("username")
@@ -113,7 +162,7 @@ func main() {
 
 	// Create the CORS middleware
 	c := cors.New(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:3000"}, // Change this to the origin you want to allow
+		AllowedOrigins:   []string{"http://localhost:3000", "http://localhost:8080"}, // Change this to the origin you want to allow
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Content-Type", "Authorization"},
 		AllowCredentials: true,
