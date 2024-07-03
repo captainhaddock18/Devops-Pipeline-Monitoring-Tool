@@ -7,7 +7,7 @@ import (
 	"encoding/base64"
 	"log"
 	"net/http"
-
+	"bytes"
 	"github.com/rs/cors"
 )
 
@@ -93,7 +93,6 @@ func main() {
 		username := r.URL.Query().Get("username")
 		apiToken := r.URL.Query().Get("apiToken")
 		jobName := r.URL.Query().Get("jobName")
-		preJob := r.URL.Query().Get("preJob")
 
 		// Check if the required parameters are present
 		if username == "" || apiToken == "" {
@@ -101,10 +100,18 @@ func main() {
 			return
 		}
 
+		// Read the request body from the incoming request
+		body, err := io.ReadAll(r.Body)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Failed to read request body: %v", err), http.StatusInternalServerError)
+			return
+		}
+		defer r.Body.Close()
+
 		// Prepare the Jenkins API request
-		url := "http://localhost:8080/createItem?name=" + jobName + "&mode=copy&from=" + preJob
+		url := "http://localhost:8080/createItem?name=" + jobName
 		client := &http.Client{}
-		req, err := http.NewRequest("POST", url, nil)
+		req, err := http.NewRequest("POST", url, bytes.NewReader(body))
 		if err != nil {
 			http.Error(w, fmt.Sprintf("Failed to create request: %v", err), http.StatusInternalServerError)
 			return
@@ -114,6 +121,7 @@ func main() {
 		auth := username + ":" + apiToken
 		encodedAuth := base64.StdEncoding.EncodeToString([]byte(auth))
 		req.Header.Add("Authorization", "Basic "+encodedAuth)
+		req.Header.Add("Content-Type", "text/xml") // Assuming the job config is in XML format
 
 		// Make the request to Jenkins
 		resp, err := client.Do(req)
@@ -129,12 +137,9 @@ func main() {
 			return
 		}
 
-		// Redirect to the Jenkins URL
-		redirectURL := "http://localhost:8080/job/" + jobName
-		http.Redirect(w, r, redirectURL, http.StatusSeeOther)
+		fmt.Fprintf(w, "Job successfully created with name %s", jobName)
 	})
 	
-
 
 	mux.HandleFunc("/get-jobs", func(w http.ResponseWriter, r *http.Request) {
 		username := r.URL.Query().Get("username")
