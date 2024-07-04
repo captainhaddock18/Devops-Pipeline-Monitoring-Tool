@@ -39,8 +39,9 @@ const Delete = () => {
           jobName: jobName,
         }
       });
-      console.log(response.data); // Log response from server
+      console.log(response); // Log response from server
       alert('Job delete request successful!');
+      navigate('/list')
     } catch (error) {
       if (error.response && error.response.status === 404) {
         alert('Job not found!');

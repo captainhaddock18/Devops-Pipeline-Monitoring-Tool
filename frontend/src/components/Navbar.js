@@ -31,6 +31,9 @@ const Navbar = () => {
             <Link to="/history" className="text-white text-lg hover:text-gray-300">History</Link>
           </li>
           <li>
+            <Link to="/delete" className="text-white text-lg hover:text-gray-300">Delete Job</Link>
+          </li>
+          <li>
             <Link to="/config" className="text-white text-lg hover:text-gray-300">Get Config</Link>
           </li>
         </ul>
