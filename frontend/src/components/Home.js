@@ -85,7 +85,7 @@ let job_status = () => {
             onClick={create_job}
             className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition duration-300"
           >
-            Click me!
+            Create New Job
           </button>
         </div>
         <div className="mt-6 flex justify-around">
