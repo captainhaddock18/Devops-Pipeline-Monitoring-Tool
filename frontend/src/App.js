@@ -4,6 +4,11 @@ import { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Login from './components/Login';
 import Home from './components/Home';
+import Build from './components/Build';
+import List from './components/List';
+import Delete from './components/Delete';
+import History from './components/History';
+import Navbar from './components/Navbar';
 
 function App() {
   const [jobs, setJobs] = useState([]);
@@ -18,22 +23,19 @@ function App() {
       });
   };
 
-  let job_list = () => {
-    axios.get('http://localhost:3010/get-jobs')
-      .then((response) => {
-        console.log("GET REQUEST PERFECT");
-        setJobs(response.data);
-      })
-      .catch((err) => {
-        console.log(err);
-      });
-  };
+
 
   return (
     <Router>
+      <Navbar/>
       <Routes>
         <Route exact path="/" element={<Login />} />
         <Route path="/home" element={<Home />} />
+        <Route path='/build' element={<Build/>}/>
+        <Route path='/list' element={<List/>}/>
+        <Route path='/delete' element={<Delete/>}/>
+        <Route path='/history' element={<History />}/>
+        <Route path='/login' element={<Login />}/>
       </Routes>
     </Router>
   );
