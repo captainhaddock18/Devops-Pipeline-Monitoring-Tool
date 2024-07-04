@@ -139,6 +139,7 @@ func main() {
 
 		fmt.Fprintf(w, "Job successfully created with name %s", jobName)
 	})
+
 	mux.HandleFunc("/delete-job", func(w http.ResponseWriter, r *http.Request) {
 		// Extract query parameters from the incoming request
 		username := r.URL.Query().Get("username")
@@ -160,7 +161,7 @@ func main() {
 		defer r.Body.Close()
 
 		// Prepare the Jenkins API request
-		url := "http://localhost:8080/job/" + jobName + "/doDelete"
+		url := "http://localhost:8080/job/" + jobName + "/api/json"
 		client := &http.Client{}
 		req, err := http.NewRequest("POST", url, bytes.NewReader(body))
 		if err != nil {
@@ -268,6 +269,55 @@ func main() {
 		w.WriteHeader(201)
 		fmt.Fprintf(w, "Job %s scheduled to build with delay %s", jobName, delay)
 	})
+	mux.HandleFunc("/get-history", func(w http.ResponseWriter, r *http.Request) {
+		// Extract query parameters from the incoming request
+		username := r.URL.Query().Get("username")
+		apiToken := r.URL.Query().Get("apiToken")
+		jobName := r.URL.Query().Get("jobName")
+	
+		// Check if the required parameters are present
+		if username == "" || apiToken == "" || jobName == "" {
+			http.Error(w, "Missing username, apiToken, or jobName parameter", http.StatusBadRequest)
+			return
+		}
+	
+		// Prepare the Jenkins API request
+		url := "http://localhost:8080/job/" + jobName + "/api/json"
+		client := &http.Client{}
+		req, err := http.NewRequest("GET", url, nil)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Failed to create request: %v", err), http.StatusInternalServerError)
+			return
+		}
+	
+		// Set Basic Auth header
+		auth := username + ":" + apiToken
+		encodedAuth := base64.StdEncoding.EncodeToString([]byte(auth))
+		req.Header.Add("Authorization", "Basic "+encodedAuth)
+	
+		// Make the request to Jenkins
+		resp, err := client.Do(req)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Failed to make request to Jenkins: %v", err), http.StatusInternalServerError)
+			return
+		}
+		defer resp.Body.Close()
+	
+		// Check if the response is successful
+		if resp.StatusCode != http.StatusOK {
+			http.Error(w, fmt.Sprintf("Failed to get job history: received status code %d", resp.StatusCode), resp.StatusCode)
+			return
+		}
+	
+		// Relay the JSON response from Jenkins directly to the client
+		w.Header().Set("Content-Type", "application/json")
+		_, err = io.Copy(w, resp.Body)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Failed to relay response: %v", err), http.StatusInternalServerError)
+			return
+		}
+	})
+
 
 
 	// Create the CORS middleware
