@@ -1,13 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const Home = () => {
   const username = sessionStorage.getItem('username');
   const apiToken = sessionStorage.getItem('apiToken');
   const [jobName, setJobName] = useState('');
-  const [preJob, setPreJob] = useState('');
   const [configXmlContent, setConfigXmlContent] = useState('');
+
   const [jobStatus, setJobStatus] = useState('');
 
   let but = () => {
@@ -41,6 +41,13 @@ let job_status = () => {
       console.log(err);
     });
 };
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!username || !apiToken) {
+      navigate('/login');
+    }
+  }, [navigate, username, apiToken]);
 
   const create_job = () => {
     if (!configXmlContent) {
@@ -50,7 +57,7 @@ let job_status = () => {
 
     axios.post(`http://localhost:3010/create-job?username=${username}&apiToken=${apiToken}&jobName=${jobName}`, configXmlContent, {
       headers: {
-        'Content-Type': 'application/xml'
+        'Content-Type': 'text/xml'
       }
     })
     .then((response) => {
@@ -71,6 +78,7 @@ let job_status = () => {
         <p className="text-xl text-center text-gray-700 mb-6">Your API Token is: {apiToken}</p>
         <div className="space-y-4">
           <div>
+            
             <label className="block text-gray-700 font-medium mb-2">Job Name:</label>
             <input
               type="text"
@@ -79,7 +87,6 @@ let job_status = () => {
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
             />
           </div>
-     
           <div>
             <label className="block text-gray-700 font-medium mb-2">Config XML:</label>
             <textarea
@@ -95,7 +102,7 @@ let job_status = () => {
             onClick={create_job}
             className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition duration-300"
           >
-            Click me!
+           Create New Job 
           </button>
         </div>
         <div className="mt-6 flex justify-around">
