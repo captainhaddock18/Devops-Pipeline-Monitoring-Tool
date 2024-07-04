@@ -7,6 +7,40 @@ const Home = () => {
   const apiToken = sessionStorage.getItem('apiToken');
   const [jobName, setJobName] = useState('');
   const [configXmlContent, setConfigXmlContent] = useState('');
+
+  const [jobStatus, setJobStatus] = useState('');
+
+  let but = () => {
+    axios.get('http://localhost:3010/thar')
+      .then(() => {
+        console.log("GET REQUEST PERFECT");
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  };
+
+let job_list = () => {
+  axios.get(`http://localhost:3010/get-jobs?username=${username}&apiToken=${apiToken}`)
+    .then((response) => {
+      console.log(response.data[0]);
+
+      // setJobs(response.data);
+    })
+    .catch((err) => {
+      console.log(err);
+    });
+};
+
+let job_status = () => {
+  axios.get(`http://localhost:3010/job-status?username=${username}&apiToken=${apiToken}&jobName=${jobStatus}`)
+    .then((response) => {
+      console.log(response.data[0]);
+    })
+    .catch((err) => {
+      console.log(err);
+    });
+};
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -89,6 +123,33 @@ const Home = () => {
           </Link>
         </div>
       </div>
+      <div>
+        <label>
+          Pre Job:
+          <input type="text" value={preJob} onChange={(e) => setPreJob(e.target.value)} />
+        </label>
+      </div>
+      <div>
+        <label>
+          Config XML:
+          <textarea 
+            value={configXmlContent} 
+            onChange={(e) => setConfigXmlContent(e.target.value)} 
+            rows="10" 
+            cols="50" 
+            placeholder="Paste the config.xml content here"
+          />
+        </label>
+      </div>
+      <button onClick={create_job}>Click me!</button>
+      <p>Status of a job:</p>
+      <div>
+        <label>
+          job: 
+          <input type="text" value={jobStatus} onChange={(e) => setJobStatus(e.target.value)} />
+        </label>
+      </div>
+      <button onClick={job_status}>Click me!</button>
     </div>
   );
 };
