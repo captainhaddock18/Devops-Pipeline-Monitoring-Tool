@@ -29,8 +29,8 @@ function App() {
 
   return (
     <Router>
-=
-            <Navbar/>
+      <Navbar/>
+      
       <Routes>
         <Route exact path="/" element={<Login />} />
         <Route path="/home" element={<Home />} />
@@ -41,7 +41,6 @@ function App() {
         <Route path='/login' element={<Login />}/>
         <Route path='/config' element={<Config />}/>
       </Routes>
-   
 
     </Router>
   );
