@@ -7,6 +7,7 @@ const Home = () => {
   const [jobName, setJobName] = useState('');
   const [preJob, setPreJob] = useState('');
   const [configXmlContent, setConfigXmlContent] = useState('');
+  const [jobStatus, setJobStatus] = useState('');
 
   
 let but = () => {
@@ -29,7 +30,16 @@ let job_list = () => {
     .catch((err) => {
       console.log(err);
     });
-    
+};
+
+let job_status = () => {
+  axios.get(`http://localhost:3010/job-status?username=${username}&apiToken=${apiToken}&jobName=${jobStatus}`)
+    .then((response) => {
+      console.log(response.data[0]);
+    })
+    .catch((err) => {
+      console.log(err);
+    });
 };
 
   const create_job = () => {
@@ -83,19 +93,16 @@ let job_list = () => {
         </label>
       </div>
       <button onClick={create_job}>Click me!</button>
+      <p>Status of a job:</p>
+      <div>
+        <label>
+          job: 
+          <input type="text" value={jobStatus} onChange={(e) => setJobStatus(e.target.value)} />
+        </label>
+      </div>
+      <button onClick={job_status}>Click me!</button>
     </div>
   );
 };
 
 export default Home;
-
-
-
-
-
-
-
-
-
-
-

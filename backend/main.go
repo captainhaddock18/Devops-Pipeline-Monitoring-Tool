@@ -1,20 +1,21 @@
 package main
 
 import (
+	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
-	"encoding/base64"
 	"log"
 	"net/http"
-	"bytes"
+
 	"github.com/rs/cors"
 )
 
 var (
 	JenkinsURL   = "http://localhost:8080/api/json?tree=jobs[name,color]" // jenkins_url + /api/json?tree=jobs[name,color]
-	JenkinsUser  = ""                                             // Your username
-	JenkinsToken = ""                   // Your API key
+	JenkinsUser  = ""                                                     // Your username
+	JenkinsToken = ""                                                     // Your API key
 )
 
 type Job struct {
@@ -70,39 +71,53 @@ type JobInfo struct {
 	// Add more fields as needed
 }
 
-func getJobInfo(jobName string) (*JobInfo, error) {
-	url := fmt.Sprintf("http://localhost:8080//job/%s/api/json?tree=builds[number,status,timestamp,id,result]", jobName) // /job/${job_name}/lastBuild/api/json?tree=result,timestamp,estimatedDuration
-	client := &http.Client{}
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		log.Fatalf("Failed to create request: %v", err)
-	}
+// func getJobInfo(jobName string) (*JobInfo, error) {
+// 	url := fmt.Sprintf("http://localhost:8080//job/%s/api/json?tree=builds[number,status,timestamp,id,result]", jobName) // /job/${job_name}/lastBuild/api/json?tree=result,timestamp,estimatedDuration
+// 	client := &http.Client{}
+// 	req, err := http.NewRequest("GET", url, nil)
+// 	if err != nil {
+// 		log.Fatalf("Failed to create request: %v", err)
+// 	}
 
-	req.SetBasicAuth(JenkinsUser, JenkinsToken)
-	resp, err := client.Do(req)
-	if err != nil {
-		log.Fatalf("Failed to send request: %v", err)
-	}
-	defer resp.Body.Close()
+// 	req.SetBasicAuth(JenkinsUser, JenkinsToken)
+// 	resp, err := client.Do(req)
+// 	if err != nil {
+// 		log.Fatalf("Failed to send request: %v", err)
+// 	}
+// 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
-		log.Fatalf("Unexpected response status: %s", resp.Status)
-	}
+// 	if resp.StatusCode != http.StatusOK {
+// 		log.Fatalf("Unexpected response status: %s", resp.Status)
+// 	}
 
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		log.Fatalf("Failed to read response body: %v", err)
-	}
+// 	body, err := io.ReadAll(resp.Body)
+// 	if err != nil {
+// 		log.Fatalf("Failed to read response body: %v", err)
+// 	}
 
-	fmt.Println(string(body))
+// 	fmt.Printf("response is of type: %T", body)
+// 	fmt.Println(string(body))
 
-	var jobInfo JobInfo
-	err = json.Unmarshal(body, &jobInfo)
-	if err != nil {
-		log.Fatalf("Failed to unmarshal JSON: %v", err)
-	}
+// 	var jobInfo JobInfo
+// 	err = json.Unmarshal(body, &jobInfo)
+// 	if err != nil {
+// 		log.Fatalf("Failed to unmarshal JSON: %v", err)
+// 	}
 
-	return &jobInfo, nil
+// 	return &jobInfo, nil
+// }
+
+type JobStatus struct {
+	Class  string  `json:"_class"`
+	Builds []Build `json:"builds"`
+}
+
+type Build struct {
+	Class     string `json:"_class"`
+	Duration  int    `json:"duration"`
+	Number    int    `json:"number"`
+	Result    string `json:"result"`
+	Timestamp int64  `json:"timestamp"`
 }
 
 func main() {
@@ -114,16 +129,56 @@ func main() {
 		fmt.Println("GET Request perfect")
 	})
 
-	mux.HandleFunc("/job-info", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/job-status", func(w http.ResponseWriter, r *http.Request) {
 		params := r.URL.Query()
-		jobName := params.Get("job")
-		jobInfo, err := getJobInfo(jobName)
+		username := params.Get("username")
+		apiToken := params.Get("apiToken")
+		jobName := params.Get("jobName")
+
+		url := fmt.Sprintf("http://localhost:8080/job/%s/api/json?tree=builds[number,status,timestamp,duration,result]", jobName) // /job/${job_name}/lastBuild/api/json?tree=result,timestamp,estimatedDuration
+		// url := "http://localhost:8080/api/json?tree=jobs[name,url,builds[number,result,duration,url]]"
+
+		client := &http.Client{}
+		req, err := http.NewRequest("GET", url, nil)
 		if err != nil {
-			panic(err)
+			log.Fatalf("Failed to create request: %v", err)
 		}
-		fmt.Printf("Job Name: %s\n", jobInfo.Name)
-		fmt.Printf("Job URL: %s\n", jobInfo.URL)
-		fmt.Printf("Job Color: %s\n", jobInfo.Color)
+
+		req.SetBasicAuth(username, apiToken)
+		resp, err := client.Do(req)
+		if err != nil {
+			log.Fatalf("Failed to send request: %v", err)
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusOK {
+			log.Fatalf("Unexpected response status: %s", resp.Status)
+		}
+
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			log.Fatalf("Failed to read response body: %v", err)
+		}
+
+		// fmt.Printf("response is of type: %T\n", body)
+		// fmt.Println(string(body))
+
+		var jobStatus JobStatus
+		err = json.Unmarshal(body, &jobStatus)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Failed to unmarshal JSON: %v", err), http.StatusInternalServerError)
+			return
+		}
+
+		fmt.Println(jobStatus)
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		err = json.NewEncoder(w).Encode(jobStatus)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Failed to write JSON response: %v", err), http.StatusInternalServerError)
+			return
+		}
 	})
 
 	mux.HandleFunc("/auth", func(w http.ResponseWriter, r *http.Request) {
@@ -142,6 +197,7 @@ func main() {
 		JenkinsUser = username
 		JenkinsToken = apiToken
 	})
+
 	mux.HandleFunc("/create-job", func(w http.ResponseWriter, r *http.Request) {
 		// Extract query parameters from the incoming request
 		username := r.URL.Query().Get("username")
@@ -193,7 +249,6 @@ func main() {
 
 		fmt.Fprintf(w, "Job successfully created with name %s", jobName)
 	})
-	
 
 	mux.HandleFunc("/get-jobs", func(w http.ResponseWriter, r *http.Request) {
 		username := r.URL.Query().Get("username")
@@ -209,7 +264,7 @@ func main() {
 		}
 		JenkinsUser = username
 		JenkinsToken = apiToken
-		
+
 		jobs, err := getJenkinsJobs()
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
