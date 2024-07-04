@@ -64,49 +64,6 @@ func getJenkinsJobs() ([]Job, error) {
 	return jenkinsResp.Jobs, nil
 }
 
-type JobInfo struct {
-	Name  string `json:"name"`
-	URL   string `json:"url"`
-	Color string `json:"color"`
-	// Add more fields as needed
-}
-
-// func getJobInfo(jobName string) (*JobInfo, error) {
-// 	url := fmt.Sprintf("http://localhost:8080//job/%s/api/json?tree=builds[number,status,timestamp,id,result]", jobName) // /job/${job_name}/lastBuild/api/json?tree=result,timestamp,estimatedDuration
-// 	client := &http.Client{}
-// 	req, err := http.NewRequest("GET", url, nil)
-// 	if err != nil {
-// 		log.Fatalf("Failed to create request: %v", err)
-// 	}
-
-// 	req.SetBasicAuth(JenkinsUser, JenkinsToken)
-// 	resp, err := client.Do(req)
-// 	if err != nil {
-// 		log.Fatalf("Failed to send request: %v", err)
-// 	}
-// 	defer resp.Body.Close()
-
-// 	if resp.StatusCode != http.StatusOK {
-// 		log.Fatalf("Unexpected response status: %s", resp.Status)
-// 	}
-
-// 	body, err := io.ReadAll(resp.Body)
-// 	if err != nil {
-// 		log.Fatalf("Failed to read response body: %v", err)
-// 	}
-
-// 	fmt.Printf("response is of type: %T", body)
-// 	fmt.Println(string(body))
-
-// 	var jobInfo JobInfo
-// 	err = json.Unmarshal(body, &jobInfo)
-// 	if err != nil {
-// 		log.Fatalf("Failed to unmarshal JSON: %v", err)
-// 	}
-
-// 	return &jobInfo, nil
-// }
-
 type JobStatus struct {
 	Class  string  `json:"_class"`
 	Builds []Build `json:"builds"`
