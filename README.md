@@ -1,17 +1,16 @@
-# DevOps Pipeline Monitoring Tool
+# JobPulse: Jenkins Jobs Managing Interface
 
 ## Overview
 
-The DevOps Pipeline Monitoring Tool is a web application that allows users to manage Jenkins jobs through a user-friendly interface. The frontend is built with React and styled using Tailwind CSS, while the backend is implemented in Go. The application interacts with Jenkins APIs to perform various operations on Jenkins jobs, including creating new jobs, deleting jobs, building jobs with delays, fetching job history, listing jobs, and retrieving the `config.xml` for any job.
+JobPulse is an innovative web application designed to manage Jenkins jobs through a user-friendly interface. The frontend is developed using React with Tailwind CSS for sleek styling, while the backend is powered by Go. This application leverages Jenkins APIs to facilitate various operations on jobs, including creating new jobs, deleting jobs, building jobs with delays, retrieving job histories, listing all jobs, and fetching `config.xml` configurations.
 
 ## Features
 
-- Create a new Jenkins job
-- Delete a Jenkins job
-- Build a Jenkins job with a specified delay
-- Retrieve the history of Jenkins jobs
-- List all Jenkins jobs
-- Fetch the `config.xml` for any Jenkins job
+- Create, delete, and manage Jenkins jobs
+- Build jobs with custom delays
+- View detailed job histories
+- List all jobs for easy management
+- Fetch and view job configurations (`config.xml`)
 
 ## Prerequisites
 
@@ -25,8 +24,8 @@ The DevOps Pipeline Monitoring Tool is a web application that allows users to ma
 1. **Clone the repository:**
 
     ```sh
-    git clone https://github.com/your-username/Devops-Pipeline-Monitoring-Tool.git
-    cd Devops-Pipeline-Monitoring-Tool
+    git clone https://github.com/your-username/JobPulse.git
+    cd JobPulse
     ```
 
 2. **Set up the frontend:**
@@ -47,7 +46,7 @@ The DevOps Pipeline Monitoring Tool is a web application that allows users to ma
 
 1. **Start the Jenkins server:**
 
-    Ensure Jenkins is running on `localhost:8080`. If not already installed, follow the [Jenkins installation guide](https://www.jenkins.io/doc/book/installing/).
+    Ensure Jenkins is running on `localhost:8080`. If Jenkins is not installed, follow the [installation guide](https://www.jenkins.io/doc/book/installing/).
 
 2. **Run the Go backend:**
 
@@ -79,20 +78,20 @@ The DevOps Pipeline Monitoring Tool is a web application that allows users to ma
     - Give it a name and click on `Generate`.
     - Copy the generated token and save it securely.
 
+
 ## Usage
 
 - Open your browser and navigate to `http://localhost:3000`.
-- Use the interface to perform various operations on Jenkins jobs.
-- The application will use REST APIs to give updates on recent builds.
+- Use the interface to manage Jenkins jobs efficiently.
+- JobPulse utilizes REST APIs for updates on job activities.
 
 ## Purpose
 
-We took up this project to understand the basics of Go and build a basic server in Go and use APIs. Additionally, we aimed to explore Continuous Integration/Continuous Deployment (CI/CD) practices.
+JobPulse was created to explore Go programming basics, API integrations, and Continuous Integration/Continuous Deployment (CI/CD) practices through a robust job management interface.
 
 ## Contributing
 
 Contributions are welcome! Please fork the repository and submit a pull request for any enhancements or bug fixes.
-
 
 ## Authors
 
