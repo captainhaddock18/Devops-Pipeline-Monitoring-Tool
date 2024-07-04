@@ -78,7 +78,7 @@ let job_list = () => {
           <textarea 
             value={configXmlContent} 
             onChange={(e) => setConfigXmlContent(e.target.value)} 
-            rows="10" 
+            rows="10"   
             cols="50" 
             placeholder="Paste the config.xml content here"
           />
@@ -96,6 +96,11 @@ let job_list = () => {
           <button>Fetch list</button>
         </Link>
       </div>
+      <Link to="/config">
+      
+      <button>Get Config.xml</button>
+      </Link>
+        
     </div>
   );
 };

@@ -6,6 +6,7 @@ import Login from './components/Login';
 import Home from './components/Home';
 import Build from './components/Build';
 import List from './components/List';
+import Delete from './components/Delete';
 
 function App() {
   const [jobs, setJobs] = useState([]);
@@ -29,6 +30,7 @@ function App() {
         <Route path="/home" element={<Home />} />
         <Route path='/build' element={<Build/>}/>
         <Route path='/list' element={<List/>}/>
+        <Route path='/delete' element={<Delete/>}/>
       </Routes>
     </Router>
   );

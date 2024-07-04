@@ -139,7 +139,57 @@ func main() {
 
 		fmt.Fprintf(w, "Job successfully created with name %s", jobName)
 	})
-	
+	mux.HandleFunc("/delete-job", func(w http.ResponseWriter, r *http.Request) {
+		// Extract query parameters from the incoming request
+		username := r.URL.Query().Get("username")
+		apiToken := r.URL.Query().Get("apiToken")
+		jobName := r.URL.Query().Get("jobName")
+
+		// Check if the required parameters are present
+		if username == "" || apiToken == "" {
+			http.Error(w, "Missing username or apiToken parameter", http.StatusBadRequest)
+			return
+		}
+
+		// Read the request body from the incoming request
+		body, err := io.ReadAll(r.Body)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Failed to read request body: %v", err), http.StatusInternalServerError)
+			return
+		}
+		defer r.Body.Close()
+
+		// Prepare the Jenkins API request
+		url := "http://localhost:8080/job/" + jobName + "/doDelete"
+		client := &http.Client{}
+		req, err := http.NewRequest("POST", url, bytes.NewReader(body))
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Failed to create request: %v", err), http.StatusInternalServerError)
+			return
+		}
+
+		// Set Basic Auth header
+		auth := username + ":" + apiToken
+		encodedAuth := base64.StdEncoding.EncodeToString([]byte(auth))
+		req.Header.Add("Authorization", "Basic "+encodedAuth)
+		req.Header.Add("Content-Type", "text/xml") // Assuming the job config is in XML format
+
+		// Make the request to Jenkins
+		resp, err := client.Do(req)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Failed to make request to Jenkins: %v", err), http.StatusInternalServerError)
+			return
+		}
+		defer resp.Body.Close()
+
+		// Check if the response is successful
+		if resp.StatusCode != http.StatusOK {
+			http.Error(w, fmt.Sprintf("Failed to delete job: received status code %d", resp.StatusCode), resp.StatusCode)
+			return
+		}
+
+		fmt.Fprintf(w, "Job with name successfully deleted %s", jobName)
+	})
 
 	mux.HandleFunc("/get-jobs", func(w http.ResponseWriter, r *http.Request) {
 		username := r.URL.Query().Get("username")
