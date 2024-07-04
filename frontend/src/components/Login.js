@@ -1,15 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
+import AuthContext from './AuthContext'; // Adjust path as necessary
 
 const Login = () => {
   const [username, setUsername] = useState('');
   const [apiToken, setApiToken] = useState('');
+  const { login } = useContext(AuthContext);
   const navigate = useNavigate();
 
   const handleSubmit = (e) => {
     e.preventDefault();
     sessionStorage.setItem('username', username);
     sessionStorage.setItem('apiToken', apiToken);
+    login(username, apiToken); // Call login function from context
     navigate('/home');
   };
 
@@ -33,7 +36,7 @@ const Login = () => {
             <label htmlFor="apiToken" className="block text-sm font-medium text-gray-700">API Token:</label>
             <input
               id="apiToken"
-              type="password" // Use type="password" for sensitive information like API tokens
+              type="password"
               value={apiToken}
               onChange={(e) => setApiToken(e.target.value)}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"

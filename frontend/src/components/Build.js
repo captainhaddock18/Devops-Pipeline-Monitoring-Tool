@@ -1,14 +1,23 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
 const Build = () => {
   const [jobName, setJobName] = useState('');
   const [delay, setDelay] = useState('');
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const username = sessionStorage.getItem('username');
+    const apiToken = sessionStorage.getItem('apiToken');
+    if (!username || !apiToken) {
+      navigate('/login'); // Redirect to login if username or apiToken not found
+    }
+  }, [navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Retrieve username and apiToken from sessionStorage
     const username = sessionStorage.getItem('username');
     const apiToken = sessionStorage.getItem('apiToken');
 
@@ -23,11 +32,11 @@ const Build = () => {
           username: username,
           apiToken: apiToken,
           jobName: jobName,
-          delay: delay || '0' // Default delay to '0' if not provided
+          delay: delay || '0'
         }
       });
       
-      console.log(response.data); // Log response from server
+      console.log(response.data);
       alert('Job build request successful!');
     } catch (error) {
       console.error('Failed to build job:', error);

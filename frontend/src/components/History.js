@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Navigate } from 'react-router-dom'; // Import Navigate for navigation
+import { Navigate } from 'react-router-dom';
 
 const History = () => {
   const [jobName, setJobName] = useState('');
@@ -9,17 +9,18 @@ const History = () => {
   const [redirectToLogin, setRedirectToLogin] = useState(false); // State for redirection
 
   useEffect(() => {
-    const username = sessionStorage.getItem('username');
-    const apiToken = sessionStorage.getItem('apiToken');
-
-    if (!username || !apiToken) {
-      setRedirectToLogin(true); // Set redirectToLogin to true if username or apiToken is missing
-    }
+    const checkAuth = () => {
+      const username = sessionStorage.getItem('username');
+      const apiToken = sessionStorage.getItem('apiToken');
+      if (!username || !apiToken) {
+        setRedirectToLogin(true); // Redirect if username or apiToken is missing
+      }
+    };
+    checkAuth();
   }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     const username = sessionStorage.getItem('username');
     const apiToken = sessionStorage.getItem('apiToken');
 
@@ -52,7 +53,7 @@ const History = () => {
   };
 
   if (redirectToLogin) {
-    return <Navigate to="/login" />; // Redirect to login page if redirectToLogin is true
+    return <Navigate to="/login" />;
   }
 
   return (
@@ -64,15 +65,15 @@ const History = () => {
             <label className="text-lg font-medium text-gray-700">
               Job Name:
             </label>
-            <input 
-              type="text" 
-              value={jobName} 
-              onChange={(e) => setJobName(e.target.value)} 
-              required 
+            <input
+              type="text"
+              value={jobName}
+              onChange={(e) => setJobName(e.target.value)}
+              required
               className="mt-2 p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
-          <button 
+          <button
             type="submit"
             className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition duration-300"
           >
