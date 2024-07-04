@@ -32,7 +32,7 @@ function App() {
 =
             <Navbar/>
       <Routes>
-        <Route exact path="/" element={<Login />} />
+        <Route exact path="/" element={<Home />} />
         <Route path="/home" element={<Home />} />
         <Route path='/build' element={<Build/>}/>
         <Route path='/list' element={<List/>}/>
