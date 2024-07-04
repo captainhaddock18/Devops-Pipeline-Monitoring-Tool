@@ -27,43 +27,6 @@ type JenkinsResponse struct {
 	Jobs []Job `json:"jobs"`
 }
 
-func getJenkinsJobs() ([]Job, error) {
-	client := &http.Client{}
-	req, err := http.NewRequest("GET", JenkinsURL, nil)
-	if err != nil {
-		log.Fatalf("Failed to create request: %v", err)
-	}
-
-	req.SetBasicAuth(JenkinsUser, JenkinsToken)
-	resp, err := client.Do(req)
-	if err != nil {
-		log.Fatalf("Failed to send request: %v", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		log.Fatalf("Unexpected response status: %s", resp.Status)
-	}
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		log.Fatalf("Failed to read response body: %v", err)
-	}
-
-	var jenkinsResp JenkinsResponse
-	err = json.Unmarshal(body, &jenkinsResp)
-	if err != nil {
-		log.Fatalf("Failed to unmarshal JSON: %v", err)
-	}
-
-	// Prints the list of jobs in the terminal of server
-	for _, job := range jenkinsResp.Jobs {
-		fmt.Printf("Job Name: %s, Job Color: %s\n", job.Name, job.Color)
-	}
-
-	return jenkinsResp.Jobs, nil
-}
-
 type JobStatus struct {
 	Class  string  `json:"_class"`
 	Builds []Build `json:"builds"`
@@ -92,29 +55,35 @@ func main() {
 		apiToken := params.Get("apiToken")
 		jobName := params.Get("jobName")
 
+		// Check if the required parameters are present
+		if username == "" || apiToken == "" || jobName == "" {
+			http.Error(w, "Missing username or apiToken parameter", http.StatusBadRequest)
+			return
+		}
+
 		url := fmt.Sprintf("http://localhost:8080/job/%s/api/json?tree=builds[number,status,timestamp,duration,result]", jobName) // /job/${job_name}/lastBuild/api/json?tree=result,timestamp,estimatedDuration
 		// url := "http://localhost:8080/api/json?tree=jobs[name,url,builds[number,result,duration,url]]"
 
 		client := &http.Client{}
 		req, err := http.NewRequest("GET", url, nil)
 		if err != nil {
-			log.Fatalf("Failed to create request: %v", err)
+			http.Error(w, fmt.Sprintf("Failed to create request: %v", err), http.StatusInternalServerError)
 		}
 
 		req.SetBasicAuth(username, apiToken)
 		resp, err := client.Do(req)
 		if err != nil {
-			log.Fatalf("Failed to send request: %v", err)
+			http.Error(w, fmt.Sprintf("Failed to create request: %v", err), http.StatusInternalServerError)
 		}
 		defer resp.Body.Close()
 
 		if resp.StatusCode != http.StatusOK {
-			log.Fatalf("Unexpected response status: %s", resp.Status)
+			http.Error(w, fmt.Sprintf("Failed to make request to Jenkins: %v", err), http.StatusInternalServerError)
 		}
 
 		body, err := io.ReadAll(resp.Body)
 		if err != nil {
-			log.Fatalf("Failed to read response body: %v", err)
+			http.Error(w, fmt.Sprintf("Failed to make request to Jenkins: %v", err), http.StatusInternalServerError)
 		}
 
 		// fmt.Printf("response is of type: %T\n", body)
@@ -271,14 +240,45 @@ func main() {
 			http.Error(w, "Missing username or apiToken parameter", http.StatusBadRequest)
 			return
 		}
+
 		JenkinsUser = username
 		JenkinsToken = apiToken
 
-		jobs, err := getJenkinsJobs()
+		client := &http.Client{}
+		req, err := http.NewRequest("GET", JenkinsURL, nil)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
+			http.Error(w, fmt.Sprintf("Failed to create request: %v", err), http.StatusInternalServerError)
 		}
+
+		req.SetBasicAuth(JenkinsUser, JenkinsToken)
+		resp, err := client.Do(req)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Failed to send request: %v", err), http.StatusInternalServerError)
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusOK {
+			http.Error(w, fmt.Sprintf("Unexpected response status: %v", err), http.StatusInternalServerError)
+		}
+
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Failed to read response body: %v", err), http.StatusInternalServerError)
+		}
+
+		var jenkinsResp JenkinsResponse
+		err = json.Unmarshal(body, &jenkinsResp)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Failed to unmarshal JSON: %v", err), http.StatusInternalServerError)
+		}
+
+		// Prints the list of jobs in the terminal of server
+		// for _, job := range jenkinsResp.Jobs {
+		// 	fmt.Printf("Job Name: %s, Job Color: %s\n", job.Name, job.Color)
+		// }
+
+		jobs := jenkinsResp.Jobs
+
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(jobs)
 	})
@@ -295,7 +295,6 @@ func main() {
 		}
 		JenkinsUser = username
 		JenkinsToken = apiToken
-		
 
 		if jobName == "" {
 			http.Error(w, "Missing jobName parameter", http.StatusBadRequest)
@@ -341,13 +340,13 @@ func main() {
 		username := r.URL.Query().Get("username")
 		apiToken := r.URL.Query().Get("apiToken")
 		jobName := r.URL.Query().Get("jobName")
-	
+
 		// Check if the required parameters are present
 		if username == "" || apiToken == "" || jobName == "" {
 			http.Error(w, "Missing username, apiToken, or jobName parameter", http.StatusBadRequest)
 			return
 		}
-	
+
 		// Prepare the Jenkins API request
 		url := "http://localhost:8080/job/" + jobName + "/api/json"
 		client := &http.Client{}
@@ -356,12 +355,12 @@ func main() {
 			http.Error(w, fmt.Sprintf("Failed to create request: %v", err), http.StatusInternalServerError)
 			return
 		}
-	
+
 		// Set Basic Auth header
 		auth := username + ":" + apiToken
 		encodedAuth := base64.StdEncoding.EncodeToString([]byte(auth))
 		req.Header.Add("Authorization", "Basic "+encodedAuth)
-	
+
 		// Make the request to Jenkins
 		resp, err := client.Do(req)
 		if err != nil {
@@ -369,13 +368,13 @@ func main() {
 			return
 		}
 		defer resp.Body.Close()
-	
+
 		// Check if the response is successful
 		if resp.StatusCode != http.StatusOK {
 			http.Error(w, fmt.Sprintf("Failed to get job history: received status code %d", resp.StatusCode), resp.StatusCode)
 			return
 		}
-	
+
 		// Relay the JSON response from Jenkins directly to the client
 		w.Header().Set("Content-Type", "application/json")
 		_, err = io.Copy(w, resp.Body)
@@ -390,13 +389,13 @@ func main() {
 		username := r.URL.Query().Get("username")
 		apiToken := r.URL.Query().Get("apiToken")
 		jobName := r.URL.Query().Get("jobName")
-	
+
 		// Check if the required parameters are present
 		if username == "" || apiToken == "" || jobName == "" {
 			http.Error(w, "Missing username, apiToken, or jobName parameter", http.StatusBadRequest)
 			return
 		}
-	
+
 		// Prepare the Jenkins API request
 		url := "http://localhost:8080/job/" + jobName + "/config.xml"
 		client := &http.Client{}
@@ -405,12 +404,12 @@ func main() {
 			http.Error(w, fmt.Sprintf("Failed to create request: %v", err), http.StatusInternalServerError)
 			return
 		}
-	
+
 		// Set Basic Auth header
 		auth := username + ":" + apiToken
 		encodedAuth := base64.StdEncoding.EncodeToString([]byte(auth))
 		req.Header.Add("Authorization", "Basic "+encodedAuth)
-	
+
 		// Make the request to Jenkins
 		resp, err := client.Do(req)
 		if err != nil {
@@ -418,13 +417,13 @@ func main() {
 			return
 		}
 		defer resp.Body.Close()
-	
+
 		// Check if the response is successful
 		if resp.StatusCode != http.StatusOK {
 			http.Error(w, fmt.Sprintf("Failed to get job history: received status code %d", resp.StatusCode), resp.StatusCode)
 			return
 		}
-	
+
 		// Relay the JSON response from Jenkins directly to the client
 		w.Header().Set("Content-Type", "application/json")
 		_, err = io.Copy(w, resp.Body)
@@ -433,9 +432,6 @@ func main() {
 			return
 		}
 	})
-
-
-
 
 	// Create the CORS middleware
 	c := cors.New(cors.Options{
