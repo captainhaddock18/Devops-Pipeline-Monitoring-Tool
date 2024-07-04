@@ -99,8 +99,12 @@ const History = () => {
             {jobInfo.healthReport.map((report, index) => (
               <p key={index} className="text-gray-700">{report.description} (Score: {report.score})</p>
             ))}
-            <p className="text-gray-700"><strong>Last Successful Build:</strong> <a href={jobInfo.lastSuccessfulBuild.url} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">{jobInfo.lastSuccessfulBuild.url}</a></p>
-            <p className="text-gray-700"><strong>Last Completed Build:</strong> <a href={jobInfo.lastCompletedBuild.url} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">{jobInfo.lastCompletedBuild.url}</a></p>
+            {jobInfo.lastSuccessfulBuild && (
+              <p className="text-gray-700"><strong>Last Successful Build:</strong> <a href={jobInfo.lastSuccessfulBuild.url} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">{jobInfo.lastSuccessfulBuild.url}</a></p>
+            )}
+            {jobInfo.lastCompletedBuild && (
+              <p className="text-gray-700"><strong>Last Completed Build:</strong> <a href={jobInfo.lastCompletedBuild.url} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">{jobInfo.lastCompletedBuild.url}</a></p>
+            )}
           </div>
         )}
       </div>

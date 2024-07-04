@@ -11,6 +11,7 @@ import Delete from './components/Delete';
 import History from './components/History';
 import Navbar from './components/Navbar';
 import Config from './components/Config';
+import Footer from './components/Footer';
 
 function App() {
   const [jobs, setJobs] = useState([]);
@@ -32,7 +33,7 @@ function App() {
       <Navbar/>
       
       <Routes>
-        <Route exact path="/" element={<Login />} />
+        <Route exact path="/" element={<Home />} />
         <Route path="/home" element={<Home />} />
         <Route path='/build' element={<Build/>}/>
         <Route path='/list' element={<List/>}/>
@@ -41,7 +42,7 @@ function App() {
         <Route path='/login' element={<Login />}/>
         <Route path='/config' element={<Config />}/>
       </Routes>
-
+      <Footer/>
     </Router>
   );
 }

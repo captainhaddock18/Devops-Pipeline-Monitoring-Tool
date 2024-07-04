@@ -9,15 +9,6 @@ const Home = () => {
   const [configXmlContent, setConfigXmlContent] = useState('');
   const [jobStatus, setJobStatus] = useState('');
 
-  let but = () => {
-    axios.get('http://localhost:3010/thar')
-      .then(() => {
-        console.log("GET REQUEST PERFECT");
-      })
-      .catch((err) => {
-        console.log(err);
-      });
-  };
 
 let job_list = () => {
   axios.get(`http://localhost:3010/get-jobs?username=${username}&apiToken=${apiToken}`)
