@@ -87,7 +87,7 @@ JobPulse is an innovative web application designed to manage Jenkins jobs throug
 
 ## Purpose
 
-JobPulse was created to explore Go programming basics, API integrations, and Continuous Integration/Continuous Deployment (CI/CD) practices through a robust job management interface.
+JobPulse was created to explore Go programming basics, API integrations, and Continuous Integration/Continuous Deployment (CI/CD) practices through a job management interface.
 
 ## Contributing
 
