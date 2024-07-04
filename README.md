@@ -79,15 +79,11 @@ The DevOps Pipeline Monitoring Tool is a web application that allows users to ma
     - Give it a name and click on `Generate`.
     - Copy the generated token and save it securely.
 
-2. **Configure the application:**
-
-    Ensure your Go backend is set up to use the Jenkins username and API token for authentication when making API requests to Jenkins.
-
 ## Usage
 
 - Open your browser and navigate to `http://localhost:3000`.
 - Use the interface to perform various operations on Jenkins jobs.
-- The application will use WebSockets to provide real-time updates on recent builds.
+- The application will use REST APIs to give updates on recent builds.
 
 ## Purpose
 
@@ -97,9 +93,6 @@ We took up this project to understand the basics of Go and build a basic server 
 
 Contributions are welcome! Please fork the repository and submit a pull request for any enhancements or bug fixes.
 
-## License
-
-This project is licensed under the MIT License.
 
 ## Authors
 
