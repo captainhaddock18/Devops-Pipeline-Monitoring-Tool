@@ -66,7 +66,7 @@ type Action struct {
 	TimeInQueueAction TimeInQueueAction `json:"timeInQueueAction,omitempty"`
 }
 
-type Build_stat struct {
+type BuildStat struct {
 	Class               string  `json:"_class"`
 	Actions             []Action `json:"actions"`
 	Duration            int     `json:"duration"`
@@ -79,7 +79,12 @@ type Build_stat struct {
 
 type JobInfo struct {
 	Class  string  `json:"_class"`
-	Builds []Build_stat `json:"builds"`
+	Builds []BuildStat `json:"builds"`
+}
+
+type JobStatsResponse struct {
+    JobName string      `json:"jobName"`
+    Builds  []BuildStat `json:"builds"`
 }
 
 func main() {
@@ -134,7 +139,7 @@ func main() {
 		}
 
 		// Format and filter relevant build data
-		var builds []Build_stat
+		var builds []BuildStat
 		for _, build := range jobInfo.Builds {
 			for _, action := range build.Actions {
 				if action.Class == "jenkins.metrics.impl.TimeInQueueAction" {
@@ -145,13 +150,18 @@ func main() {
 			builds = append(builds, build)
 		}
 
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		err = json.NewEncoder(w).Encode(builds)
-		if err != nil {
-			http.Error(w, fmt.Sprintf("Failed to write JSON response: %v", err), http.StatusInternalServerError)
-			return
-		}
+		response := JobStatsResponse{
+            JobName: jobName,
+            Builds:  builds,
+        }
+
+        w.Header().Set("Content-Type", "application/json")
+        w.WriteHeader(http.StatusOK)
+        err = json.NewEncoder(w).Encode(response)
+        if err != nil {
+            http.Error(w, fmt.Sprintf("Failed to write JSON response: %v", err), http.StatusInternalServerError)
+            return
+        }
 	})
 
 	mux.HandleFunc("/job-status", func(w http.ResponseWriter, r *http.Request) {
