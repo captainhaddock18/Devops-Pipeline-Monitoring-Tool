@@ -40,6 +40,53 @@ type Build struct {
 	Timestamp int64  `json:"timestamp"`
 }
 
+type Cause struct {
+	Class           string `json:"_class"`
+	ShortDescription string `json:"shortDescription"`
+	UserId          string `json:"userId"`
+	UserName        string `json:"userName"`
+}
+
+type TimeInQueueAction struct {
+	Class                     string  `json:"_class"`
+	BlockedDurationMillis     int     `json:"blockedDurationMillis"`
+	BlockedTimeMillis         int     `json:"blockedTimeMillis"`
+	BuildableDurationMillis   int     `json:"buildableDurationMillis"`
+	BuildableTimeMillis       int     `json:"buildableTimeMillis"`
+	BuildingDurationMillis    int     `json:"buildingDurationMillis"`
+	ExecutingTimeMillis       int     `json:"executingTimeMillis"`
+	ExecutorUtilization       float64 `json:"executorUtilization"`
+	WaitingDurationMillis     int     `json:"waitingDurationMillis"`
+	WaitingTimeMillis         int     `json:"waitingTimeMillis"`
+}
+
+type Action struct {
+	Class      string           `json:"_class"`
+	Causes     []Cause          `json:"causes,omitempty"`
+	TimeInQueueAction TimeInQueueAction `json:"timeInQueueAction,omitempty"`
+}
+
+type BuildStat struct {
+	Class               string  `json:"_class"`
+	Actions             []Action `json:"actions"`
+	Duration            int     `json:"duration"`
+	Number              int     `json:"number"`
+	Result              string  `json:"result"`
+	Timestamp           int64   `json:"timestamp"`
+	QueueTime           int     `json:"queueTime"`
+	ExecutorUtilization float64 `json:"executorUtilization"`
+}
+
+type JobInfo struct {
+	Class  string  `json:"_class"`
+	Builds []BuildStat `json:"builds"`
+}
+
+type JobStatsResponse struct {
+    JobName string      `json:"jobName"`
+    Builds  []BuildStat `json:"builds"`
+}
+
 func main() {
 
 	mux := http.NewServeMux()
@@ -47,6 +94,74 @@ func main() {
 	mux.HandleFunc("/thar", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintln(w, "GET REQUEST PERFECT")
 		fmt.Println("GET Request perfect")
+	})
+
+    mux.HandleFunc("/job-stats", func(w http.ResponseWriter, r *http.Request) {
+		params := r.URL.Query()
+		username := params.Get("username")
+		apiToken := params.Get("apiToken")
+		jobName := params.Get("jobName")
+
+		url := fmt.Sprintf("http://localhost:8080/job/%s/api/json?tree=builds[number,duration,result,timestamp,actions[causes[shortDescription,userId,userName],jenkins.metrics.impl.TimeInQueueAction[blockedDurationMillis,blockedTimeMillis,buildableDurationMillis,buildableTimeMillis,buildingDurationMillis,executingTimeMillis,executorUtilization,waitingDurationMillis,waitingTimeMillis]]]", jobName)
+		client := &http.Client{}
+		req, err := http.NewRequest("GET", url, nil)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Failed to create request: %v", err), http.StatusInternalServerError)
+			return
+		}
+
+		req.SetBasicAuth(username, apiToken)
+		resp, err := client.Do(req)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Failed to send request: %v", err), http.StatusInternalServerError)
+			return
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusOK {
+			http.Error(w, fmt.Sprintf("Unexpected response status: %s", resp.Status), resp.StatusCode)
+			return
+		}
+
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Failed to read response body: %v", err), http.StatusInternalServerError)
+			return
+		}
+
+		fmt.Println(string(body))
+
+		var jobInfo JobInfo
+		err = json.Unmarshal(body, &jobInfo)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Failed to unmarshal JSON: %v", err), http.StatusInternalServerError)
+			return
+		}
+
+		// Format and filter relevant build data
+		var builds []BuildStat
+		for _, build := range jobInfo.Builds {
+			for _, action := range build.Actions {
+				if action.Class == "jenkins.metrics.impl.TimeInQueueAction" {
+					build.QueueTime = action.TimeInQueueAction.BuildableDurationMillis
+					build.ExecutorUtilization = action.TimeInQueueAction.ExecutorUtilization
+				}
+			}
+			builds = append(builds, build)
+		}
+
+		response := JobStatsResponse{
+            JobName: jobName,
+            Builds:  builds,
+        }
+
+        w.Header().Set("Content-Type", "application/json")
+        w.WriteHeader(http.StatusOK)
+        err = json.NewEncoder(w).Encode(response)
+        if err != nil {
+            http.Error(w, fmt.Sprintf("Failed to write JSON response: %v", err), http.StatusInternalServerError)
+            return
+        }
 	})
 
 	mux.HandleFunc("/job-status", func(w http.ResponseWriter, r *http.Request) {
