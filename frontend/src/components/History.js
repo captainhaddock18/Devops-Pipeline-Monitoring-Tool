@@ -135,7 +135,7 @@ const History = () => {
             type="submit"
             className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition duration-300"
           >
-            Submit
+            Get History
           </button>
         </form>
         {error && <div className="mt-4 text-red-500 text-center">{error}</div>}

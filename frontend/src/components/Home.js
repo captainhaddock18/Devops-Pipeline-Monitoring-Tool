@@ -56,8 +56,8 @@ let job_status = () => {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-r from-blue-500 to-green-500">
       <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-3xl">
-        <h2 className="text-4xl font-bold mb-4 text-center text-gray-800">Home</h2>
-        <p className="text-xl text-center text-gray-700 mb-6">Welcome, {username}!</p>
+        <h2 className="text-4xl font-bold mb-4 text-center text-gray-800">Welcome, {username}!</h2>
+        {/* <p className="text-xl text-center text-gray-700 mb-6"></p> */}
         <p className="text-xl text-center text-gray-700 mb-6">Your API Token is: {apiToken}</p>
         <div className="space-y-4">
           <div>
@@ -85,7 +85,7 @@ let job_status = () => {
             onClick={create_job}
             className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition duration-300"
           >
-            Click me!
+            Create New Job
           </button>
         </div>
         <div className="mt-6 flex justify-around">

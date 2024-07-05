@@ -39,8 +39,9 @@ const Delete = () => {
           jobName: jobName,
         }
       });
-      console.log(response.data); // Log response from server
+      console.log(response); // Log response from server
       alert('Job delete request successful!');
+      navigate('/list')
     } catch (error) {
       if (error.response && error.response.status === 404) {
         alert('Job not found!');
@@ -52,7 +53,7 @@ const Delete = () => {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100">
+    <div className="flex items-center justify-center min-h-screen bg-gray-100 bg-gradient-to-r from-blue-500 to-purple-500">
       <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
         <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">Delete Jenkins Job</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -72,7 +73,7 @@ const Delete = () => {
             type="submit"
             className="w-full bg-red-600 text-white py-2 rounded-lg hover:bg-red-700 transition duration-300"
           >
-            Submit
+            Delete
           </button>
         </form>
       </div>

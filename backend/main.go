@@ -302,7 +302,7 @@ func main() {
 		defer r.Body.Close()
 
 		// Prepare the Jenkins API request
-		url := "http://localhost:8080/job/" + jobName + "/api/json"
+		url := "http://localhost:8080/job/" + jobName + "/doDelete"
 		client := &http.Client{}
 		req, err := http.NewRequest("POST", url, bytes.NewReader(body))
 		if err != nil {
@@ -314,7 +314,7 @@ func main() {
 		auth := username + ":" + apiToken
 		encodedAuth := base64.StdEncoding.EncodeToString([]byte(auth))
 		req.Header.Add("Authorization", "Basic "+encodedAuth)
-		req.Header.Add("Content-Type", "text/xml") // Assuming the job config is in XML format
+		// req.Header.Add("Content-Type", "text/xml") // Assuming the job config is in XML format
 
 		// Make the request to Jenkins
 		resp, err := client.Do(req)
