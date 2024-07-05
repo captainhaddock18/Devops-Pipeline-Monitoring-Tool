@@ -1,19 +1,21 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { Navigate } from 'react-router-dom';
+import * as d3 from 'd3';
 
 const History = () => {
   const [jobName, setJobName] = useState('');
   const [jobInfo, setJobInfo] = useState(null);
   const [error, setError] = useState('');
-  const [redirectToLogin, setRedirectToLogin] = useState(false); // State for redirection
+  const [redirectToLogin, setRedirectToLogin] = useState(false);
+  const svgRef = useRef();
 
   useEffect(() => {
     const checkAuth = () => {
       const username = sessionStorage.getItem('username');
       const apiToken = sessionStorage.getItem('apiToken');
       if (!username || !apiToken) {
-        setRedirectToLogin(true); // Redirect if username or apiToken is missing
+        setRedirectToLogin(true);
       }
     };
     checkAuth();
@@ -30,12 +32,12 @@ const History = () => {
     }
 
     try {
-      const response = await axios.get(`http://localhost:3010/get-history`, {
+      const response = await axios.get('http://localhost:3010/get-history', {
         params: {
           username: username,
           apiToken: apiToken,
-          jobName: jobName
-        }
+          jobName: jobName,
+        },
       });
 
       if (response.data) {
@@ -52,6 +54,64 @@ const History = () => {
     }
   };
 
+  useEffect(() => {
+    if (!jobInfo || !jobInfo.builds) return;
+
+    // Ensure durations are numbers
+    const builds = jobInfo.builds.map(build => ({
+      ...build,
+      duration: Number(build.duration)
+    }));
+
+    // Log the builds to ensure the data is correct
+    console.log('Builds:', builds);
+
+    // Set up the SVG element
+    const svg = d3.select(svgRef.current)
+      .attr('width', 800)
+      .attr('height', 400)
+      .style('background', '#f0f0f0')
+      .style('margin-top', '50')
+      .style('overflow', 'visible');
+
+    // Define the scales
+    const xScale = d3.scaleBand()
+      .domain(builds.map((build) => build.number))
+      .range([0, 800])
+      .padding(0.4);
+
+    const yScale = d3.scaleLinear()
+      .domain([0, d3.max(builds, (build) => build.duration)])
+      .range([400, 0]);
+
+    // Clear existing contents
+    svg.selectAll('*').remove();
+
+    // Set up the axes
+    const xAxis = d3.axisBottom(xScale);
+    const yAxis = d3.axisLeft(yScale).ticks(5);
+
+    svg.append('g')
+      .call(xAxis)
+      .attr('transform', 'translate(0, 400)');
+
+    svg.append('g')
+      .call(yAxis);
+
+    // Draw the bars
+    svg.selectAll('.bar')
+      .data(builds)
+      .enter()
+      .append('rect')
+      .attr('class', 'bar')
+      .attr('x', (build) => xScale(build.number))
+      .attr('y', (build) => yScale(build.duration))
+      .attr('width', xScale.bandwidth())
+      .attr('height', (build) => 400 - yScale(build.duration))
+      .attr('fill', 'orange');
+
+  }, [jobInfo]);
+
   if (redirectToLogin) {
     return <Navigate to="/login" />;
   }
@@ -62,9 +122,7 @@ const History = () => {
         <h2 className="text-4xl font-bold mb-4 text-center text-gray-800">Jenkins Job History</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="flex flex-col">
-            <label className="text-lg font-medium text-gray-700">
-              Job Name:
-            </label>
+            <label className="text-lg font-medium text-gray-700">Job Name:</label>
             <input
               type="text"
               value={jobName}
@@ -105,8 +163,11 @@ const History = () => {
             {jobInfo.lastCompletedBuild && (
               <p className="text-gray-700"><strong>Last Completed Build:</strong> <a href={jobInfo.lastCompletedBuild.url} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">{jobInfo.lastCompletedBuild.url}</a></p>
             )}
+            <svg ref={svgRef}></svg> {/* Add the SVG element here */}
           </div>
+          
         )}
+        
       </div>
     </div>
   );
