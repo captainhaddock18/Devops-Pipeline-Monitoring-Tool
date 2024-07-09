@@ -1,3 +1,3 @@
-function s(){
+function sefekr(){
     return 1;
 }
